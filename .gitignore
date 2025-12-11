@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+venv/
+env/
+
+# VSCode
+.vscode/
+
+# Data and models (optional; keep big stuff out of git)
+data/bera_text_corpus.txt
+models/
+outputs/
+logs/
