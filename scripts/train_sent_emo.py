@@ -232,7 +232,7 @@ def main():
     # -----------------------------------------------------------------
     # Training loop
     # -----------------------------------------------------------------
-    num_epochs = 1
+    num_epochs = 6
     best_val_loss = float("inf")
     ckpt_path = models_dir / "bera_sent_emo.pt"
 
