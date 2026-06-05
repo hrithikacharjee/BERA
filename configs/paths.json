@@ -1,0 +1,25 @@
+{
+  "local": {
+    "raw_dataset": "data/raw/dataset.csv",
+    "processed_dataset": "data/processed/processed.csv",
+    "features_dataset": "data/processed/features.csv",
+    "tokenizer_model": "artifacts/tokenizer/bera_spm.model",
+    "tokenizer_vocab": "artifacts/tokenizer/bera_spm.vocab",
+    "checkpoint": "artifacts/checkpoints/bera_sent_emo.pt",
+    "metrics_json": "artifacts/reports/metrics.json",
+    "java_export_json": "artifacts/reports/java_dashboard_export.json",
+    "run_info_json": "artifacts/reports/run_info.json"
+  },
+  "drive": {
+    "base_dir": "/content/drive/MyDrive/BERA_RUN",
+    "raw_dataset": "/content/drive/MyDrive/BERA_RUN/data/raw/dataset.csv",
+    "processed_dataset": "/content/drive/MyDrive/BERA_RUN/data/processed/processed.csv",
+    "features_dataset": "/content/drive/MyDrive/BERA_RUN/data/processed/features.csv",
+    "tokenizer_model": "/content/drive/MyDrive/BERA_RUN/artifacts/tokenizer/bera_spm.model",
+    "tokenizer_vocab": "/content/drive/MyDrive/BERA_RUN/artifacts/tokenizer/bera_spm.vocab",
+    "checkpoint": "/content/drive/MyDrive/BERA_RUN/artifacts/checkpoints/bera_sent_emo.pt",
+    "metrics_json": "/content/drive/MyDrive/BERA_RUN/artifacts/reports/metrics.json",
+    "java_export_json": "/content/drive/MyDrive/BERA_RUN/artifacts/reports/java_dashboard_export.json",
+    "run_info_json": "/content/drive/MyDrive/BERA_RUN/artifacts/reports/run_info.json"
+  }
+}
