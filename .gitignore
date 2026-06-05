@@ -1,0 +1,14 @@
+# Ignore the large fine-tuned model weights folder
+model_save/
+
+# Ignore the large training history file
+training_history.pkl
+
+# Ignore standard python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
