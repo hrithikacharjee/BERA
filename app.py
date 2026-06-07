@@ -4,16 +4,43 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 import os
+import zipfile
+import requests
 
-# --- 0. CONFIGURATION ---
+
+def download_model_weights(file_id, destination):
+
+    if not os.path.exists(destination):
+        with st.spinner("Downloading fine-tuned transformer weights from Google Drive... This may take a minute."):
+            
+            url = f"https://drive.google.com/file/d/1f1mxfhyJe1Dg1GNODyYOxXJ0ssqHftm6/view?usp=drive_link"
+            
+            response = requests.get(url, stream=True)
+            with open("model_save.zip", "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            
+            
+            with zipfile.ZipFile("model_save.zip", "r") as zip_ref:
+                zip_ref.extractall(".")
+            
+            
+            os.remove("model_save.zip")
+            st.success("Model weights loaded successfully!")
+
+
+GOOGLE_DRIVE_FILE_ID = "1f1mxfhyJe1Dg1GNODyYOxXJ0ssqHftm6"
+MODEL_DIR = "model_save"
+
+download_model_weights(GOOGLE_DRIVE_FILE_ID, MODEL_DIR)
+
 MODEL_NAME = 'bert-base-multilingual-cased'
 
-# The model was trained with 3 labels, we keep this for weight loading compatibility
-SENTIMENT_LABELS = ['Negative', 'Neutral', 'Positive']
+
+SENTIMENT_LABELS = ['Negative', 'Positive']
 DISPLAY_LABELS = ['Negative', 'Positive'] 
 EMOTION_LABELS = ['Angry', 'Fear', 'Happy', 'Love', 'Sad']
-
-# --- 1. MODEL ARCHITECTURE ---
 class BeraMultiTaskModel(nn.Module):
     def __init__(self, model_name, num_sentiment=3, num_emotion=5):
         super(BeraMultiTaskModel, self).__init__()
@@ -40,10 +67,9 @@ class BeraMultiTaskModel(nn.Module):
         emotion_logits = self.emotion_output(self.dropout(e_hidden))
         return sentiment_logits, emotion_logits
 
-# --- 2. LOADING MODEL & TOKENIZER ---
 @st.cache_resource
 def load_assets():
-    # Use the local model_save folder
+
     tokenizer = AutoTokenizer.from_pretrained("./model_save")
     model = BeraMultiTaskModel(
         model_name=MODEL_NAME, 
@@ -55,7 +81,7 @@ def load_assets():
     model.eval()
     return tokenizer, model
 
-# --- 3. PAGE CONFIG & AUTH ---
+
 st.set_page_config(page_title="BERA Dashboard", layout="wide")
 
 if 'logged_in' not in st.session_state:
@@ -81,7 +107,7 @@ def login():
         if st.button("Register Now"):
             st.success("Account request sent to BERA Admin for approval!")
 
-# --- 4. MAIN APP ---
+
 if not st.session_state['logged_in']:
     login()
 else:
@@ -129,14 +155,13 @@ else:
                         with torch.no_grad():
                             s_logits, e_logits = model(encoded['input_ids'], encoded['attention_mask'])
                             
-                            # Softmax for Probability normalization
+                         
                             s_probs = torch.softmax(s_logits, dim=1)
                             p_neg = s_probs[0][0].item()
                             p_neu = s_probs[0][1].item()
                             p_pos = s_probs[0][2].item()
                             
-                            # HYBRID LOGIC: Neutral reviews are often "polite positives" in e-commerce.
-                            # We check if Positive + (Half of Neutral) beats Negative.
+                
                             if (p_pos + (p_neu * 0.6)) > p_neg:
                                 s_final = "Positive"
                             else:
@@ -163,7 +188,7 @@ else:
             res = st.session_state['results']
             st.divider()
             
-            # --- FILTERS ---
+
             f1, f2, f3 = st.columns(3)
             with f1: view = st.multiselect("Show Output", ["Sentiment", "Emotion", "Score_Pos", "Score_Neg"], default=["Sentiment", "Emotion"])
             with f2: s_filt = st.multiselect("Sentiment Filter", DISPLAY_LABELS, default=DISPLAY_LABELS)

@@ -6,3 +6,4 @@ regex
 sentencepiece
 torch
 matplotlib
+pip freeze > requirements.txt
