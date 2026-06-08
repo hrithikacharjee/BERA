@@ -7,13 +7,14 @@ import os
 import zipfile
 import requests
 
-
-def download_model_weights(file_id, destination):
-
+def download_model_weights():
+    """Downloads fine-tuned model weights directly from Hugging Face Hub."""
+    destination = "model_save"
     if not os.path.exists(destination):
-        with st.spinner("Downloading fine-tuned transformer weights from Google Drive... This may take a minute."):
+        with st.spinner("Downloading fine-tuned transformer weights from Hugging Face Hub... This may take a moment."):
             
-            url = f"https://drive.google.com/file/d/1f1mxfhyJe1Dg1GNODyYOxXJ0ssqHftm6/view?usp=drive_link"
+            # Direct Hugging Face download URL
+            url = "https://huggingface.co/hrithikacharjee/BERA/resolve/main/model_save.zip"
             
             response = requests.get(url, stream=True)
             with open("model_save.zip", "wb") as f:
@@ -21,26 +22,24 @@ def download_model_weights(file_id, destination):
                     if chunk:
                         f.write(chunk)
             
-            
+            # Unzip into the workspace directory
             with zipfile.ZipFile("model_save.zip", "r") as zip_ref:
                 zip_ref.extractall(".")
             
-            
+            # Clean up cache zip file
             os.remove("model_save.zip")
-            st.success("Model weights loaded successfully!")
+            st.success("Model weights loaded successfully from Hugging Face Hub!")
 
-
-GOOGLE_DRIVE_FILE_ID = "1f1mxfhyJe1Dg1GNODyYOxXJ0ssqHftm6"
-MODEL_DIR = "model_save"
-
-download_model_weights(GOOGLE_DRIVE_FILE_ID, MODEL_DIR)
+# Trigger the robust Hugging Face download check on initialization
+download_model_weights()
 
 MODEL_NAME = 'bert-base-multilingual-cased'
 
-
-SENTIMENT_LABELS = ['Negative', 'Positive']
+# Defined to accommodate the 3-class prediction probabilities used in the analysis flow
+SENTIMENT_LABELS = ['Negative', 'Neutral', 'Positive']
 DISPLAY_LABELS = ['Negative', 'Positive'] 
 EMOTION_LABELS = ['Angry', 'Fear', 'Happy', 'Love', 'Sad']
+
 class BeraMultiTaskModel(nn.Module):
     def __init__(self, model_name, num_sentiment=3, num_emotion=5):
         super(BeraMultiTaskModel, self).__init__()
@@ -69,7 +68,6 @@ class BeraMultiTaskModel(nn.Module):
 
 @st.cache_resource
 def load_assets():
-
     tokenizer = AutoTokenizer.from_pretrained("./model_save")
     model = BeraMultiTaskModel(
         model_name=MODEL_NAME, 
@@ -80,7 +78,6 @@ def load_assets():
     model.load_state_dict(torch.load(weights_path, map_location=torch.device('cpu')))
     model.eval()
     return tokenizer, model
-
 
 st.set_page_config(page_title="BERA Dashboard", layout="wide")
 
@@ -106,7 +103,6 @@ def login():
         st.text_input("New Password", type="password", key="reg_pw")
         if st.button("Register Now"):
             st.success("Account request sent to BERA Admin for approval!")
-
 
 if not st.session_state['logged_in']:
     login()
@@ -155,13 +151,11 @@ else:
                         with torch.no_grad():
                             s_logits, e_logits = model(encoded['input_ids'], encoded['attention_mask'])
                             
-                         
                             s_probs = torch.softmax(s_logits, dim=1)
                             p_neg = s_probs[0][0].item()
                             p_neu = s_probs[0][1].item()
                             p_pos = s_probs[0][2].item()
                             
-                
                             if (p_pos + (p_neu * 0.6)) > p_neg:
                                 s_final = "Positive"
                             else:
@@ -187,7 +181,6 @@ else:
         if 'results' in st.session_state:
             res = st.session_state['results']
             st.divider()
-            
 
             f1, f2, f3 = st.columns(3)
             with f1: view = st.multiselect("Show Output", ["Sentiment", "Emotion", "Score_Pos", "Score_Neg"], default=["Sentiment", "Emotion"])
