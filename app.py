@@ -81,38 +81,69 @@ def load_assets():
 
 st.set_page_config(page_title="BERA Dashboard", layout="wide")
 
+import json
+
+# Ensure a persistent file exists to store user registration data
+USER_DB_FILE = "users.json"
+
+def load_registered_users():
+    """Loads accounts from the local JSON file database."""
+    # Base admin account always exists
+    default_users = {"admin": "bera2026"}
+    if not os.path.exists(USER_DB_FILE):
+        with open(USER_DB_FILE, "w") as f:
+            json.dump(default_users, f)
+        return default_users
+    try:
+        with open(USER_DB_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return default_users
+
+def save_new_user(username, password):
+    """Saves a newly registered account directly into the database."""
+    users = load_registered_users()
+    users[username] = password
+    with open(USER_DB_FILE, "w") as f:
+        json.dump(users, f)
+
+# Initialize login states
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
 def login():
     st.title("🛍️ BERA Portal")
     tab1, tab2 = st.tabs(["Login", "Sign Up"])
+    
+    # Load all registered users dynamically
+    registered_users = load_registered_users()
+
     with tab1:
         user = st.text_input("Username", key="log_user")
         pw = st.text_input("Password", type="password", key="log_pw")
         if st.button("Login"):
-            if user == "admin" and pw == "bera2026":
+            # Check against the dynamic database dictionary
+            if user in registered_users and registered_users[user] == pw:
                 st.session_state['logged_in'] = True
                 st.rerun()
             else: 
-                st.error("Invalid credentials")
+                st.error("Invalid credentials. Please register if you don't have an account.")
+                
     with tab2:
         st.subheader("Create New Account")
-        st.text_input("Email", key="reg_email")
-        st.text_input("New Username", key="reg_user")
-        st.text_input("New Password", type="password", key="reg_pw")
+        reg_email = st.text_input("Email", key="reg_email")
+        reg_user = st.text_input("New Username", key="reg_user")
+        reg_pw = st.text_input("New Password", type="password", key="reg_pw")
+        
         if st.button("Register Now"):
-            st.success("Account request sent to BERA Admin for approval!")
-
-if not st.session_state['logged_in']:
-    login()
-else:
-    tokenizer, model = load_assets()
-    st.sidebar.title("BERA Navigation")
-    page = st.sidebar.radio("Go to", ["Analysis", "About BERA", "Our Team"])
-    if st.sidebar.button("Logout"):
-        st.session_state['logged_in'] = False
-        st.rerun()
+            if not reg_user.strip() or not reg_pw.strip():
+                st.error("Username and Password fields cannot be empty!")
+            elif reg_user in registered_users:
+                st.error("This username already exists! Choose a unique username.")
+            else:
+                # Instantly save account to the json database matrix
+                save_new_user(reg_user, reg_pw)
+                st.success(f"🎉 Account '{reg_user}' successfully created! You can now switch to the 'Login' tab to access the app.")
 
     if page == "Analysis":
         st.title("📊 BERA Review Intelligence")
