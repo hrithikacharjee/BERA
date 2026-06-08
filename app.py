@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModel
 import os
 import zipfile
 import requests
+import json
 
 def download_model_weights():
     """Downloads fine-tuned model weights directly from Hugging Face Hub."""
@@ -81,8 +82,6 @@ def load_assets():
 
 st.set_page_config(page_title="BERA Dashboard", layout="wide")
 
-import json
-
 # Ensure a persistent file exists to store user registration data
 USER_DB_FILE = "users.json"
 
@@ -144,6 +143,18 @@ def login():
                 # Instantly save account to the json database matrix
                 save_new_user(reg_user, reg_pw)
                 st.success(f"🎉 Account '{reg_user}' successfully created! You can now switch to the 'Login' tab to access the app.")
+
+# --- ROUTING LOGIC ---
+if not st.session_state['logged_in']:
+    login()
+else:
+    # Everything below runs only if logged_in is True
+    tokenizer, model = load_assets()
+    st.sidebar.title("BERA Navigation")
+    page = st.sidebar.radio("Go to", ["Analysis", "About BERA", "Our Team"])
+    if st.sidebar.button("Logout"):
+        st.session_state['logged_in'] = False
+        st.rerun()
 
     if page == "Analysis":
         st.title("📊 BERA Review Intelligence")
